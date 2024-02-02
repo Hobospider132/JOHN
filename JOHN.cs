@@ -1,4 +1,4 @@
-﻿// There's 100% some way of optimising this, not bothered at the moment though
+// There's 100% some way of optimising this, not bothered at the moment though
 
 using MongoDB.Driver;
 using MongoDB.Bson;
@@ -20,39 +20,44 @@ class Program
     {
       case 1:
         Create();
+        Menu();
         break;
       case 2:
         Delete();
+        Menu();
         break;
       case 3:
         Sort();
+        Menu();
         break;
       case 4:
         Environment.Exit(0);
         break;
       default:
         Console.WriteLine("Invalid choice. Please choose a number between 1 and 4.");
+        Menu();
         break;
     }
   }
 
   private static void ConnectToMongoDB()
   {
-    Console.WriteLine("Create a .env file with your connection details to avoid receiving this message.");
-
     string connectionUri;
 
     if(File.Exists(".env")) {
+      Console.WriteLine("Connecting...");
       using(var sr = new StreamReader(".env")) {
         connectionUri = sr.ReadToEnd();
       }
     } else {  
+      Console.WriteLine("Create a .env file with your connection details to avoid receiving this message.");
       Console.WriteLine("Enter connection URL for MongoDB server: ");
       connectionUri = Console.ReadLine();
     }
 
       var settings = MongoClientSettings.FromConnectionString(connectionUri);
       settings.ServerApi = new ServerApi(ServerApiVersion.V1);
+      Console.WriteLine(settings);
       client = new MongoClient(settings);  
 
     try
@@ -90,6 +95,10 @@ class Program
     }
   }
 
+  private static void DeleteDue() {
+    // Delete overdue tasks 
+  }
+
   private static void Create()
   {
     List<BsonDocument> tasks = new List<BsonDocument>();
@@ -102,7 +111,7 @@ class Program
 
       if (subject.Trim().ToLower() == "submit")
       {
-        break; // Finish entering tasks
+        break;
       }
 
       Console.WriteLine("Task Description: ");
@@ -147,18 +156,22 @@ class Program
       {
         case 1:
           DeleteByDate();
+          Menu();
           break;
         case 2:
           DeleteBySubject();
+          Menu();
           break;
         case 3:
           DeleteByName();
+          Menu();
           break;
         case 4:
           Menu();
           break;
         default:
           Console.WriteLine("Invalid choice. Please choose an option between 1 and 4.");
+          Menu();
           break;
       }
     }
@@ -167,7 +180,7 @@ class Program
   {
     Console.WriteLine("Enter the date to delete tasks (format: DDMMYYYY): ");
     string dateInput = Console.ReadLine();
-    if (DateTime.TryParseExact(dateInput, "DDMMYYYY", null, System.Globalization.DateTimeStyles.None, out DateTime dateToDelete))
+    if (DateTime.TryParseExact(dateInput, "ddMMyyyy", null, System.Globalization.DateTimeStyles.None, out DateTime dateToDelete))
     {
       var filter = Builders<BsonDocument>.Filter.Eq("Deadline", dateToDelete);
       DeleteTasks(filter);
@@ -214,14 +227,17 @@ class Program
     switch(choice) {
       case 1:
         Unsorted();
+        Menu();
         break;
       case 2:
         Urgent();
+        Menu();
         break;
       case 3:
         Console.WriteLine("Subject name to sort by: ");
         string subject = Console.ReadLine();
         Subject(subject);
+        Menu();
         break;
       case 4:
         Menu();
@@ -234,10 +250,10 @@ class Program
         Console.WriteLine("--------------------------------------------------------");
         Console.WriteLine("{0,-15} {1,-15} {2,-10} {3,-10}", "Subject", "Task", "Priority", "Deadline");
         Console.WriteLine("--------------------------------------------------------");
-
         foreach (var task in tasks)
         {
             Console.ForegroundColor = GetTaskColor(task.ToBsonDocument());
+            // var deadline = DateTime.ParseExact(task["Deadline"].ToString(), "ddMMyyyy", CultureInfo.InvariantCulture); .ToString("dd/MM/yyyy")
             Console.WriteLine($"{task["Subject"],-15} {task["Task"],-15} {GetPriority(task.ToBsonDocument()),-10} {task["Deadline"],-10}");
             Console.ResetColor();
         }
